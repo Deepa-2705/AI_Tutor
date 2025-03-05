@@ -3,6 +3,21 @@
 interface AIError {
   status?: number
   message?: string
+  error?: string
+}
+
+interface HuggingFaceRequest {
+  inputs: string
+  parameters?: {
+    max_length?: number
+    temperature?: number
+    top_p?: number
+    do_sample?: boolean
+  }
+}
+
+interface HuggingFaceResponse {
+  generated_text: string
 }
 
 // You can get a free API token from https://huggingface.co/settings/tokens
@@ -15,7 +30,7 @@ if (!HF_API_TOKEN) {
 // Using a smaller, free model from Hugging Face
 const MODEL_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large"
 
-async function query(payload: any) {
+async function query(payload: HuggingFaceRequest): Promise<HuggingFaceResponse[]> {
   const response = await fetch(MODEL_URL, {
     headers: { 
       Authorization: `Bearer ${HF_API_TOKEN}`,
@@ -26,9 +41,10 @@ async function query(payload: any) {
   })
   const result = await response.json()
   if (response.status !== 200) {
-    throw new Error(result.error || 'Failed to get response from model')
+    const error = result as AIError
+    throw new Error(error.error || 'Failed to get response from model')
   }
-  return result
+  return result as HuggingFaceResponse[]
 }
 
 export interface AIResponse {
